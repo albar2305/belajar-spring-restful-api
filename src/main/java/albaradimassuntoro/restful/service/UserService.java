@@ -2,6 +2,7 @@ package albaradimassuntoro.restful.service;
 
 import albaradimassuntoro.restful.entity.User;
 import albaradimassuntoro.restful.model.RegisterUserRequest;
+import albaradimassuntoro.restful.model.UserResponse;
 import albaradimassuntoro.restful.repository.UserRepository;
 import albaradimassuntoro.restful.security.BCrypt;
 import jakarta.transaction.Transactional;
@@ -35,6 +36,8 @@ public class UserService {
 
     userRepository.save(user);
   }
+
+//  public UserResponse get(String )
 
 
 }
