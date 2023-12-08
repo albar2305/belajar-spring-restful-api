@@ -2,6 +2,7 @@ package albaradimassuntoro.restful.controller;
 
 import albaradimassuntoro.restful.entity.User;
 import albaradimassuntoro.restful.model.RegisterUserRequest;
+import albaradimassuntoro.restful.model.UpdateUserRequest;
 import albaradimassuntoro.restful.model.UserResponse;
 import albaradimassuntoro.restful.model.WebResponse;
 import albaradimassuntoro.restful.repository.UserRepository;
@@ -183,6 +184,57 @@ class UserControllerTest {
       WebResponse<String> response = objectMapper.readValue(result.getResponse().getContentAsString(), new TypeReference<>() {
       });
       assertNotNull(response.getErrors());
+    });
+  }
+
+  @Test
+  void updateUserUnauthorized() throws Exception {
+    UpdateUserRequest request = new UpdateUserRequest();
+    mockMvc.perform(
+        patch("/api/users/current")
+            .accept(MediaType.APPLICATION_JSON)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(request))
+    ).andExpectAll(
+        status().isUnauthorized()
+    ).andDo(result -> {
+      WebResponse<String> response = objectMapper.readValue(result.getResponse().getContentAsString(), new TypeReference<>() {
+      });
+      assertNotNull(response.getErrors());
+    });
+  }
+
+  @Test
+  void updateUserSuccess() throws Exception {
+    User user = new User();
+    user.setUsername("test");
+    user.setName("Test");
+    user.setPassword("test");
+    user.setToken("test");
+    user.setTokenExpiredAt(System.currentTimeMillis() + 10000000000000000L);
+    userRepository.save(user);
+
+    UpdateUserRequest request = new UpdateUserRequest();
+    request.setName("Albar");
+    request.setPassword("albar12345");
+    mockMvc.perform(
+        patch("/api/users/current")
+            .accept(MediaType.APPLICATION_JSON)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(request))
+            .header("X-API-TOKEN", "test")
+    ).andExpectAll(
+        status().isOk()
+    ).andDo(result -> {
+      WebResponse<UserResponse> response = objectMapper.readValue(result.getResponse().getContentAsString(), new TypeReference<>() {
+      });
+      assertNull(response.getErrors());
+      assertEquals("Albar", response.getData().getName());
+      assertEquals("test", response.getData().getUsername());
+
+      User userDb = userRepository.findById("test").orElse(null);
+      assertNotNull(userDb);
+      assertTrue(BCrypt.checkpw("albar12345", userDb.getPassword()));
     });
   }
 }
