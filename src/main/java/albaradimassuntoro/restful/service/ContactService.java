@@ -4,6 +4,7 @@ import albaradimassuntoro.restful.entity.Contact;
 import albaradimassuntoro.restful.entity.User;
 import albaradimassuntoro.restful.model.ContactResponse;
 import albaradimassuntoro.restful.model.CreateContactRequest;
+import albaradimassuntoro.restful.model.UpdateContactRequest;
 import albaradimassuntoro.restful.repository.ContactRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,5 +53,27 @@ public class ContactService {
   public ContactResponse get(User user, String id) {
     Contact contact = contactRepository.findFirstByUserAndId(user, id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Content not Found"));
     return toContactResponse(contact);
+  }
+
+  @Transactional
+  public ContactResponse update(User user, UpdateContactRequest request) {
+    validationService.validate(request);
+    Contact contact = contactRepository.findFirstByUserAndId(user, request.getId())
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Content not Found"));
+    contact.setFirstName(request.getFirstName());
+    contact.setLastName(request.getLastName());
+    contact.setPhone(request.getPhone());
+    contact.setEmail(request.getEmail());
+    contactRepository.save(contact);
+
+    return toContactResponse(contact);
+  }
+
+  @Transactional
+  public void delete(User user, String contactId) {
+    Contact contact = contactRepository.findFirstByUserAndId(user, contactId)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Content not Found"));
+
+    contactRepository.delete(contact);
   }
 }
